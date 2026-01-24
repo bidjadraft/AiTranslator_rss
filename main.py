@@ -8,6 +8,7 @@ import configparser
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 import sys
+import html
 
 def _mask(s, keep_start=4, keep_end=4):
     try:
@@ -24,54 +25,40 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler(os.path.join(os.getcwd(), "rss_translator.log")),
+        logging.FileHandler("rss_translator.log"),
         logging.StreamHandler()
     ]
 )
 
 # ************ قراءة المتغيرات الأساسية من config.ini ************
-BASE_DIR = os.getcwd()  # المجلد الجذر
+BASE_DIR = os.getcwd()
 CONFIG_FILE = os.path.join(BASE_DIR, "config.ini")
 config = configparser.ConfigParser()
 config.read(CONFIG_FILE, encoding='utf-8')
 
-# قراءة الإعدادات من config.ini
+# قراءة الإعدادات
 GEMINI_API_KEY = config.get('credentials', 'gemini_api_key', fallback=None)
 
-# قراءة قائمة النماذج من config.ini
-GEMINI_MODELS_STR = config.get('settings', 'gemini_models', fallback='gemini-2.5-flash,gemini-2.5-flash-lite,gemini-3-flash,gemini-robotics-er-1.5-preview')
+GEMINI_MODELS_STR = config.get('settings', 'gemini_models', 
+    fallback='gemini-2.5-flash,gemini-2.5-flash-lite,gemini-3-flash')
 GEMINI_MODELS = [model.strip() for model in GEMINI_MODELS_STR.split(',') if model.strip()]
 
-# قراءة قائمة روابط RSS
 RSS_URLS_STR = config.get('settings', 'rss_urls', 
-    fallback='https://feed.alternativeto.net/news/all,https://www.elbilad.net/rss')
+    fallback='https://feed.alternativeto.net/news/all')
 RSS_URLS = [url.strip() for url in RSS_URLS_STR.split(',') if url.strip()]
 
-TRACKER_FILE = os.path.join(BASE_DIR, "last_post_id.txt")
-FEED_FILE = os.path.join(BASE_DIR, "feed.xml")
+TRACKER_FILE = "last_post_id.txt"
+FEED_FILE = "feed.xml"
 
-# برومبتات الترجمة (بدون عبارات إضافية)
-TRANSLATION_PROMPT = """ترجم النص التالي إلى العربية بدقة وحافظ على المعنى الأصلي:
+# برومبت الترجمة
+TRANSLATION_PROMPT = """ترجم النص التالي إلى العربية بسلاسة ووضوح:
 
 {text}"""
 
 TRANSLATION_TEMPERATURE = 0.2
 TRANSLATION_TOP_P = 0.8
 
-# تحقق تفصيلي من تحميل الإعدادات
-try:
-    logging.info(f"=== RSS Translator Started ===")
-    logging.info(f"Python version: {sys.version}")
-    logging.info(f"Working directory: {BASE_DIR}")
-    logging.info(f"Config file: {CONFIG_FILE} (exists: {os.path.exists(CONFIG_FILE)})")
-    logging.info(f"GEMINI_API_KEY: {_mask(GEMINI_API_KEY)}")
-    logging.info(f"Number of RSS feeds: {len(RSS_URLS)}")
-    logging.info(f"RSS feeds: {RSS_URLS}")
-except Exception as _e:
-    logging.error(f"Failed to log config diagnostics: {_e}")
-
 class GeminiModelSwitcher:
-    """يدير تبديل نماذج Gemini"""
     def __init__(self, models):
         self.models = models
         self.current_index = 0
@@ -89,7 +76,6 @@ class GeminiModelSwitcher:
         self.current_index = 0
 
 def validate_config():
-    """يتحقق من أن config.ini والحقول الأساسية محمّلة"""
     missing = []
     if not os.path.exists(CONFIG_FILE):
         logging.error(f"config.ini not found at: {CONFIG_FILE}")
@@ -98,73 +84,67 @@ def validate_config():
     if not GEMINI_API_KEY:
         missing.append("gemini_api_key")
     if not GEMINI_MODELS:
-        missing.append("gemini_models (at least one model required)")
+        missing.append("gemini_models")
     if not RSS_URLS:
-        missing.append("rss_urls (at least one RSS feed required)")
+        missing.append("rss_urls")
 
     if missing:
-        logging.error(f"Missing required config keys: {', '.join(missing)}")
+        logging.error(f"Missing: {', '.join(missing)}")
         return False
 
-    logging.info("✅ Config verified successfully.")
+    logging.info("✅ Config verified")
     return True
 
 def normalize_url(url):
-    """تطبيع الروابط"""
     if not url or not isinstance(url, str):
         return ""
     url = url.strip()
-    while url.endswith('//'):
-        url = url[:-1]
-    if not url.startswith('http'):
-        return url
-    if not url.endswith('/'):
-        url = url + '/'
     return url
 
 def get_last_post_id():
-    """يقرأ آخر معرّف منشور تمت معالجته."""
     try:
         if not os.path.exists(TRACKER_FILE):
-            logging.info("📂 Tracker file not found. Starting fresh.")
-            with open(TRACKER_FILE, 'w', encoding='utf-8') as f:
-                f.write("")
             return ""
 
         with open(TRACKER_FILE, 'r', encoding='utf-8') as f:
             content = f.read().strip()
-            normalized = normalize_url(content)
-            logging.info(f"📖 Last processed ID: '{normalized}'")
-            return normalized
+            return normalize_url(content)
     except Exception as e:
-        logging.error(f"❌ Error reading tracker file: {e}")
+        logging.error(f"❌ Error reading tracker: {e}")
         return ""
 
 def set_last_post_id(post_id):
-    """يكتب معرّف المنشور الحالي بعد معالجته."""
     try:
-        normalized_id = normalize_url(post_id)
         with open(TRACKER_FILE, 'w', encoding='utf-8') as f:
-            f.write(normalized_id)
-        logging.info(f"💾 Saved to tracker: '{normalized_id}'")
+            f.write(normalize_url(post_id))
     except Exception as e:
-        logging.error(f"❌ Failed to write to tracker file: {e}")
+        logging.error(f"❌ Failed to write tracker: {e}")
 
 def clean_html(raw_html):
-    """ينظف النص من وسوم HTML."""
-    return re.sub(r'<[^>]+>', '', raw_html).strip()
+    """تنظيف HTML وإزالة الوسوم"""
+    if not raw_html:
+        return ""
+    
+    # إزالة وسوم HTML
+    text = re.sub(r'<[^>]+>', ' ', raw_html)
+    
+    # إزالة مسافات زائدة
+    text = re.sub(r'\s+', ' ', text)
+    
+    # إزالة رموز HTML
+    text = html.unescape(text)
+    
+    return text.strip()
 
 def translate_with_gemini(text, model_switcher, content_type="text"):
-    """يترجم النص إلى العربية باستخدام Gemini."""
+    """ترجمة النص باستخدام Gemini"""
     if not GEMINI_API_KEY:
-        logging.error("GEMINI_API_KEY is not set.")
-        return None
-
-    if not text or len(text.strip()) < 3:
-        logging.warning(f"Text is too short to translate ({content_type}).")
+        logging.error("API key missing")
         return text
 
-    # محاولة جميع النماذج
+    if not text or len(text.strip()) < 5:
+        return text
+
     start_index = model_switcher.current_index
     attempted_models = 0
 
@@ -172,20 +152,23 @@ def translate_with_gemini(text, model_switcher, content_type="text"):
         current_model = model_switcher.get_current_model()
         attempted_models += 1
 
-        logging.info(f"🔧 Translating {content_type} with model: {current_model}")
-
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{current_model}:generateContent?key={GEMINI_API_KEY}"
+        
+        # تقصير النص إذا كان طويلاً جداً
+        if len(text) > 3000:
+            text = text[:3000] + "..."
 
-        # برومبت بسيط بدون عبارات إضافية
         prompt = TRANSLATION_PROMPT.format(text=text)
 
         payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
                 "temperature": TRANSLATION_TEMPERATURE,
-                "topP": TRANSLATION_TOP_P
+                "topP": TRANSLATION_TOP_P,
+                "maxOutputTokens": 1000
             }
         }
+        
         headers = {"Content-Type": "application/json"}
 
         try:
@@ -194,98 +177,87 @@ def translate_with_gemini(text, model_switcher, content_type="text"):
             
             result = response.json()['candidates'][0]['content']['parts'][0]['text'].strip()
             
-            # إزالة أي عبارات مثل "النص المترجم:" أو "الترجمة:"
-            result = re.sub(r'^(?:النص\s*المترجم|الترجمة|المحتوى\s*المترجم)[:\s]*', '', result, flags=re.IGNORECASE)
+            # تنظيف النتيجة
+            result = re.sub(r'^(?:الترجمة|النص المترجم|المحتوى المترجم)[:\s]*', '', result, flags=re.IGNORECASE)
             result = result.strip()
             
-            logging.info(f"✅ Translated {content_type} successfully")
-            return result
-
-        except requests.exceptions.HTTPError as e:
-            status_code = e.response.status_code if e.response else None
-
-            if status_code == 429:
-                logging.warning(f"⚠️ Rate limit (429) with model: {current_model}")
-            elif status_code in [400, 404, 500, 503]:
-                logging.warning(f"⚠️ API error {status_code} with model: {current_model}")
+            if result:
+                logging.info(f"✅ Translated {content_type}")
+                return result
             else:
-                logging.error(f"❌ Gemini HTTP error {status_code} with model {current_model}: {e}")
-
-            # محاولة النموذج التالي
-            next_model = model_switcher.get_next_model()
-            if next_model:
-                logging.info(f"🔄 Switching to next model: {next_model}")
-                time.sleep(2)
-                continue
-            else:
-                logging.error(f"🚨 All {len(model_switcher.models)} models exhausted")
-                break
+                return text
 
         except Exception as e:
-            logging.error(f"❌ Gemini API call failed with model {current_model}: {e}")
-
-            # محاولة النموذج التالي
+            logging.warning(f"⚠️ Translation failed with {current_model}: {str(e)[:100]}...")
+            
             next_model = model_switcher.get_next_model()
             if next_model:
-                logging.info(f"🔄 Switching to next model: {next_model}")
                 time.sleep(1)
                 continue
             else:
-                logging.error(f"🚨 All {len(model_switcher.models)} models failed")
                 break
 
-    # إعادة تعيين المؤشر
     model_switcher.current_index = start_index
-    logging.error(f"🚨 Failed to translate {content_type} with all models")
-    return text  # إرجاع النص الأصلي في حالة الفشل
+    return text
 
-def create_or_load_feed():
-    """ينشئ أو يحمل ملف feed.xml"""
-    if os.path.exists(FEED_FILE):
-        try:
-            tree = ET.parse(FEED_FILE)
-            root = tree.getroot()
-            item_count = len(root.findall('.//item'))
-            logging.info(f"✅ Loaded existing feed.xml with {item_count} items")
-            return root
-        except Exception as e:
-            logging.error(f"Failed to parse existing feed.xml: {e}")
-            logging.info("Creating new feed.xml file...")
+def ensure_feed_file():
+    """تأكد من وجود feed.xml صالح"""
+    if not os.path.exists(FEED_FILE):
+        create_empty_feed()
+        return None
     
-    # إنشاء ملف RSS جديد
+    try:
+        # محاولة تحليل الملف
+        tree = ET.parse(FEED_FILE)
+        root = tree.getroot()
+        
+        # تحقق من أن الملف يحتوي على هيكل RSS صحيح
+        if root.tag != 'rss':
+            logging.warning("feed.xml doesn't have proper RSS structure, recreating...")
+            create_empty_feed()
+            return None
+        
+        channel = root.find('channel')
+        if channel is None:
+            logging.warning("feed.xml missing channel, recreating...")
+            create_empty_feed()
+            return None
+            
+        return root
+    except Exception as e:
+        logging.warning(f"Could not parse feed.xml: {e}, recreating...")
+        create_empty_feed()
+        return None
+
+def create_empty_feed():
+    """إنشاء ملف feed.xml فارغ"""
     rss = ET.Element("rss", version="2.0")
     channel = ET.SubElement(rss, "channel")
     
-    # معلومات القناة الأساسية
     ET.SubElement(channel, "title").text = "ترجمة RSS"
-    ET.SubElement(channel, "description").text = "منشورات مترجمة من مصادر RSS متعددة"
+    ET.SubElement(channel, "description").text = "منشورات مترجمة من مصادر RSS"
     ET.SubElement(channel, "link").text = "https://github.com"
     ET.SubElement(channel, "language").text = "ar"
     ET.SubElement(channel, "lastBuildDate").text = time.strftime('%a, %d %b %Y %H:%M:%S %z')
     
-    logging.info("✅ Created new feed.xml structure")
+    save_feed(rss)
     return rss
 
 def save_feed(feed_root):
-    """يحفظ ملف feed.xml"""
+    """حفظ feed.xml"""
     try:
-        # تحديث تاريخ البناء الأخير
-        last_build_date = feed_root.find(".//lastBuildDate")
-        if last_build_date is not None:
-            last_build_date.text = time.strftime('%a, %d %b %Y %H:%M:%S %z')
+        # تحديث تاريخ البناء
+        last_build = feed_root.find(".//lastBuildDate")
+        if last_build is not None:
+            last_build.text = time.strftime('%a, %d %b %Y %H:%M:%S %z')
         
-        # تحويل XML إلى نص منظم
+        # تحويل إلى XML منظم
         rough_string = ET.tostring(feed_root, encoding='utf-8')
         reparsed = minidom.parseString(rough_string)
         pretty_xml = reparsed.toprettyxml(indent="  ", encoding='utf-8')
         
-        # إزالة الأسطر الفارغة الزائدة
-        pretty_xml_str = pretty_xml.decode('utf-8')
-        lines = [line for line in pretty_xml_str.split('\n') if line.strip()]
-        final_xml = '\n'.join(lines)
-        
-        with open(FEED_FILE, 'w', encoding='utf-8') as f:
-            f.write(final_xml)
+        with open(FEED_FILE, 'wb') as f:
+            f.write(pretty_xml)
         
         item_count = len(feed_root.find('.//channel').findall('item'))
         logging.info(f"💾 Saved feed.xml with {item_count} items")
@@ -294,205 +266,174 @@ def save_feed(feed_root):
         logging.error(f"❌ Failed to save feed.xml: {e}")
         return False
 
-def add_item_to_feed(feed_root, entry, translated_title, translated_content, feed_source=None):
-    """يضيف عنصراً جديداً إلى feed.xml"""
+def add_item_to_feed(feed_root, entry, translated_title, translated_content):
+    """إضافة عنصر جديد إلى feed.xml"""
     try:
         channel = feed_root.find(".//channel")
         if channel is None:
-            logging.error("Channel element not found in feed.xml")
             return False
         
-        # إنشاء عنصر جديد
         item = ET.SubElement(channel, "item")
         
-        # العنوان المترجم (بدون أي عبارات إضافية)
-        ET.SubElement(item, "title").text = translated_title
+        # العنوان المترجم
+        ET.SubElement(item, "title").text = translated_title[:500]  # الحد من الطول
         
-        # الرابط الأصلي
+        # الرابط
         link = entry.get('link', '')
         if link:
             ET.SubElement(item, "link").text = link
         
-        # المحتوى المترجم (بدون أي عبارات إضافية)
-        ET.SubElement(item, "description").text = translated_content
+        # المحتوى المترجم
+        ET.SubElement(item, "description").text = translated_content[:2000]  # الحد من الطول
         
-        # معرف المنشور
+        # المعرف
         post_id = entry.get('id') or link
         if post_id:
-            guid_elem = ET.SubElement(item, "guid")
-            guid_elem.text = post_id
-            guid_elem.set('isPermaLink', 'false')
+            guid = ET.SubElement(item, "guid")
+            guid.text = post_id
+            guid.set('isPermaLink', 'false')
         
         # التاريخ
         published = entry.get('published', entry.get('updated', ''))
         if published:
             ET.SubElement(item, "pubDate").text = published
         
-        # مصدر RSS (اختياري)
+        # المصدر
+        feed_source = entry.get('feed_source', '')
         if feed_source:
             ET.SubElement(item, "source").text = feed_source
         
-        logging.info(f"➕ Added item to feed.xml")
         return True
     except Exception as e:
-        logging.error(f"❌ Failed to add item to feed.xml: {e}")
+        logging.error(f"❌ Failed to add item: {e}")
         return False
 
-def get_all_entries_from_feeds(rss_urls):
-    """يحصل على جميع المنشورات من مصادر RSS المختلفة"""
+def get_feed_entries():
+    """جلب المنشورات من جميع مصادر RSS"""
     all_entries = []
     
-    for rss_url in rss_urls:
+    for rss_url in RSS_URLS:
         try:
-            logging.info(f"📥 Fetching RSS feed: {rss_url}")
+            logging.info(f"📥 Fetching: {rss_url}")
             feed = feedparser.parse(rss_url)
             
-            if hasattr(feed, 'entries') and feed.entries:
-                logging.info(f"  Found {len(feed.entries)} entries")
-                
+            if feed.entries:
                 for entry in feed.entries:
                     entry['feed_source'] = rss_url
                     all_entries.append(entry)
+                logging.info(f"  Found {len(feed.entries)} entries")
             else:
                 logging.warning(f"  No entries found")
                 
         except Exception as e:
-            logging.error(f"❌ Failed to parse RSS feed {rss_url}: {e}")
-            continue
+            logging.error(f"❌ Failed to parse {rss_url}: {e}")
     
-    # دمج وترتيب جميع المنشورات حسب التاريخ
-    all_entries_sorted = sorted(
-        all_entries, 
-        key=lambda e: e.get('published_parsed') or e.get('updated_parsed') or (0,)
-    )
+    # ترتيب حسب التاريخ
+    all_entries.sort(key=lambda e: e.get('published_parsed') or e.get('updated_parsed') or (0,))
     
-    logging.info(f"📊 Total entries from all feeds: {len(all_entries_sorted)}")
-    return all_entries_sorted
+    logging.info(f"📊 Total entries: {len(all_entries)}")
+    return all_entries
 
-def process_post(entry, model_switcher, feed_root):
-    """معالجة المنشور وترجمة العنوان والمحتوى"""
-    post_id = entry.get('id') or entry.get('link')
-    feed_source = entry.get('feed_source', 'Unknown Source')
+def process_entries(entries, model_switcher, feed_root):
+    """معالجة المنشورات"""
+    last_id = get_last_post_id()
     
-    logging.info(f"\n🎯 Processing post from {feed_source}")
-    logging.info(f"📄 Post ID: {post_id}")
+    if not last_id:
+        # إذا لم يكن هناك آخر معرف، معالجة آخر 3 منشورات
+        logging.info("No last ID found, processing latest 3 posts")
+        entries_to_process = entries[-3:] if len(entries) >= 3 else entries
+    else:
+        # البحث عن آخر معرف
+        last_index = -1
+        for i, entry in enumerate(entries):
+            current_id = entry.get('id') or entry.get('link')
+            if normalize_url(current_id) == last_id:
+                last_index = i
+                break
+        
+        if last_index >= 0:
+            entries_to_process = entries[last_index + 1:]
+        else:
+            logging.warning("Last ID not found, processing latest 3 posts")
+            entries_to_process = entries[-3:] if len(entries) >= 3 else entries
     
-    # 1. الحصول على العنوان الأصلي وتنظيفه
-    original_title = entry.get('title', 'No Title')
-    original_title_clean = clean_html(original_title)
-    
-    # 2. الحصول على المحتوى الأصلي وتنظيفه
-    desc = entry.get('summary', '') or entry.get('description', '') or entry.get('content', '')
-    original_content = clean_html(desc)
-    
-    # إذا كان المحتوى فارغاً، استخدم العنوان
-    if not original_content or len(original_content.strip()) < 10:
-        original_content = original_title_clean
-    
-    logging.info(f"📝 Original title: {original_title_clean[:100]}...")
-    logging.info(f"📄 Original content: {original_content[:100]}...")
-    
-    # 3. ترجمة العنوان
-    translated_title = translate_with_gemini(original_title_clean, model_switcher, "title")
-    if not translated_title or translated_title == original_title_clean:
-        logging.error(f"❌ Failed to translate title")
-        translated_title = original_title_clean
-    
-    # 4. ترجمة المحتوى
-    translated_content = translate_with_gemini(original_content, model_switcher, "content")
-    if not translated_content or translated_content == original_content:
-        logging.warning(f"⚠️ Using original content (translation failed)")
-        translated_content = original_content
-    
-    logging.info(f"📝 Translated title: {translated_title[:100]}...")
-    logging.info(f"📄 Translated content: {translated_content[:100]}...")
-    
-    # 5. إضافة العنصر إلى feed.xml
-    success = add_item_to_feed(feed_root, entry, translated_title, translated_content, feed_source)
-    if not success:
-        logging.error(f"❌ Failed to add item to feed.xml")
+    if not entries_to_process:
+        logging.info("⏭️ No new posts to process")
         return False
     
-    # 6. تحديث الملف بعد النجاح
-    set_last_post_id(post_id)
+    logging.info(f"🔄 Processing {len(entries_to_process)} new posts")
     
-    return True
+    processed_count = 0
+    for entry in entries_to_process:
+        if processed_count >= 5:  # الحد الأقصى 5 منشورات في كل تشغيل
+            logging.info("⚠️ Reached maximum posts per run (5)")
+            break
+        
+        post_id = entry.get('id') or entry.get('link')
+        logging.info(f"\n🎯 Processing: {post_id}")
+        
+        # العنوان الأصلي
+        original_title = clean_html(entry.get('title', 'No Title'))
+        if not original_title or original_title == 'No Title':
+            continue
+        
+        # المحتوى الأصلي
+        original_content = clean_html(
+            entry.get('summary', '') or 
+            entry.get('description', '') or 
+            entry.get('content', '') or 
+            original_title
+        )
+        
+        # ترجمة العنوان
+        translated_title = translate_with_gemini(original_title, model_switcher, "title")
+        if translated_title == original_title:
+            translated_title = original_title  # استخدام الأصل إذا فشلت الترجمة
+        
+        # ترجمة المحتوى
+        translated_content = translate_with_gemini(original_content, model_switcher, "content")
+        if translated_content == original_content:
+            translated_content = original_content
+        
+        # إضافة إلى feed.xml
+        if add_item_to_feed(feed_root, entry, translated_title, translated_content):
+            set_last_post_id(post_id)
+            save_feed(feed_root)
+            processed_count += 1
+            
+            # انتظار بين المنشورات
+            time.sleep(2)
+    
+    return processed_count > 0
 
 def main():
-    """الدالة الرئيسية"""
     logging.info("🚀 Starting RSS Translator")
+    
+    # التحقق من الإعدادات
+    if not validate_config():
+        return
+    
+    # إنشاء أو تحميل feed.xml
+    feed_root = ensure_feed_file()
+    if feed_root is None:
+        feed_root = create_empty_feed()
     
     # إنشاء مدير النماذج
     model_switcher = GeminiModelSwitcher(GEMINI_MODELS)
-
-    # تأكيد أن الإعدادات محمّلة قبل البدء
-    if not validate_config():
-        logging.error("Aborting due to invalid configuration.")
-        return
-
-    # تحميل أو إنشاء feed.xml
-    feed_root = create_or_load_feed()
-
-    # جلب جميع المنشورات من جميع مصادر RSS
-    all_entries = get_all_entries_from_feeds(RSS_URLS)
     
-    if not all_entries:
-        logging.info("No posts found in any RSS feed.")
+    # جلب المنشورات
+    entries = get_feed_entries()
+    if not entries:
+        logging.info("📭 No entries found in any RSS feed")
         return
-
-    # جلب آخر معرف محفوظ
-    last_id = get_last_post_id()
     
-    # إذا لم يكن هناك آخر معرف، نعالج أحدث منشور فقط
-    if not last_id:
-        logging.info("No last post ID found. Processing the latest post only.")
-        latest_entry = all_entries[-1]
-        
-        if process_post(latest_entry, model_switcher, feed_root):
-            save_feed(feed_root)
-            logging.info(f"🎉 Run completed successfully.")
-        else:
-            logging.error("❌ Failed to process post.")
-        return
-
-    # البحث عن موقع آخر منشور محفوظ في القائمة
-    last_index = -1
-    for i, entry in enumerate(all_entries):
-        current_id = entry.get('id') or entry.get('link')
-        current_id_normalized = normalize_url(current_id)
-
-        if current_id_normalized == last_id:
-            last_index = i
-            break
-
-    # إذا وجدنا آخر منشور محفوظ، نعالج كل المنشورات التي بعده
-    if last_index >= 0:
-        new_entries = all_entries[last_index + 1:]
-        if new_entries:
-            logging.info(f"Found {len(new_entries)} new posts to process")
-
-            for entry in new_entries:
-                if process_post(entry, model_switcher, feed_root):
-                    save_feed(feed_root)
-                    time.sleep(3)  # انتظار بين المنشورات
-                else:
-                    logging.error(f"🚨 Failed to process post. Stopping.")
-                    break
-
-        else:
-            logging.info("No new posts found since last processed post.")
+    # معالجة المنشورات
+    if process_entries(entries, model_switcher, feed_root):
+        logging.info("✅ Processing completed successfully")
     else:
-        # إذا لم نجد آخر منشور محفوظ، نعالج أحدث منشور فقط
-        logging.warning("Last processed post not found. Processing latest post only.")
-        latest_entry = all_entries[-1]
-
-        if process_post(latest_entry, model_switcher, feed_root):
-            save_feed(feed_root)
-            logging.info(f"🎉 Run completed successfully.")
-        else:
-            logging.error("❌ Failed to process post.")
-
-    logging.info("✅ RSS Translator finished!")
+        logging.info("⏭️ Nothing processed")
+    
+    logging.info("🏁 RSS Translator finished")
 
 if __name__ == "__main__":
     main()
