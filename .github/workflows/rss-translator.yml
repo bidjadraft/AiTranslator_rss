@@ -1,130 +1,26 @@
-name: RSS Translator
-
-on:
-  schedule:
-    - cron: '0 * * * *'  # كل ساعة
-  workflow_dispatch:  # تشغيل يدوي
-
-permissions:
-  contents: write  # صلاحية الكتابة للرفع التلقائي
-
-jobs:
-  translate:
-    runs-on: ubuntu-latest
+- name: 💾 Commit and push with force
+  if: success()
+  env:
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  run: |
+    echo "=== Force Push Method ==="
     
-    steps:
-    - name: ⬇️ Checkout repository
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+    # Configure git
+    git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    git config --global user.name "github-actions[bot]"
     
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-        cache: 'pip'
+    # Add and commit
+    git add feed.xml last_post_id.txt rss_translator.log
     
-    - name: 📦 Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install feedparser==6.0.10 requests==2.31.0
-    
-    - name: 🔧 Create initial files if missing
-      run: |
-        echo "=== Ensuring required files exist ==="
-        
-        # Create feed.xml if missing or empty
-        if [ ! -f "feed.xml" ] || [ ! -s "feed.xml" ]; then
-          echo "Creating feed.xml..."
-          cat > feed.xml << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0">
-  <channel>
-    <title>ترجمة RSS</title>
-    <description>منشورات مترجمة من مصادر RSS متعددة</description>
-    <link>https://github.com/${{ github.repository }}</link>
-    <language>ar</language>
-    <lastBuildDate>$(date -R)</lastBuildDate>
-  </channel>
-</rss>
-EOF
-          echo "✅ feed.xml created"
-        else
-          echo "✅ feed.xml already exists"
-        fi
-        
-        # Create other required files
-        [ ! -f "last_post_id.txt" ] && touch last_post_id.txt
-        [ ! -f "rss_translator.log" ] && echo "Log created: $(date)" > rss_translator.log
-        
-        echo "Files checked:"
-        ls -la feed.xml last_post_id.txt rss_translator.log config.ini 2>/dev/null || true
-    
-    - name: 🚀 Run RSS translator
-      run: |
-        echo "=== Running RSS Translator ==="
-        echo "Start time: $(date)"
-        echo ""
-        
-        # Run the translator
-        python main.py
-        
-        echo ""
-        echo "End time: $(date)"
-        echo ""
-        echo "=== Summary ==="
-        echo "feed.xml size: $(wc -c < feed.xml) bytes"
-        echo "Items in feed.xml: $(grep -c '<item>' feed.xml 2>/dev/null || echo '0')"
-        
-        if [ -f "last_post_id.txt" ]; then
-          echo "Last processed ID: $(cat last_post_id.txt | head -1)"
-        fi
-    
-    - name: 💾 Commit and push changes automatically
-      if: success()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        echo "=== Committing Changes Automatically ==="
-        
-        # Configure git
-        git config --local user.email "github-actions[bot]@users.noreply.github.com"
-        git config --local user.name "github-actions[bot]"
-        
-        # Check current status
-        echo "Current git status:"
-        git status --short
-        
-        # Add output files
-        git add feed.xml last_post_id.txt rss_translator.log
-        
-        # Check if there are changes to commit
-        if git diff --cached --quiet; then
-          echo "⏭️ No changes to commit"
-        else
-          echo "✅ Changes detected, creating commit..."
-          
-          # Create commit message with timestamp
-          COMMIT_MSG="🤖 Auto-update: RSS translation $(date '+%Y-%m-%d %H:%M:%S UTC')"
-          echo "Commit message: $COMMIT_MSG"
-          
-          # Commit changes
-          git commit -m "$COMMIT_MSG"
-          
-          # Push changes
-          echo "Pushing to repository..."
-          git push
-          
-          echo "✅ Successfully pushed changes to GitHub"
-        fi
-    
-    - name: 📤 Upload artifacts
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: rss-translator-output
-        path: |
-          feed.xml
-          last_post_id.txt
-          rss_translator.log
-        retention-days: 7
+    if ! git diff --cached --quiet; then
+      git commit -m "🤖 Auto-update: $(date '+%Y-%m-%d %H:%M:%S')"
+      
+      # Pull latest changes first
+      git pull --rebase origin main
+      
+      # Push with force if needed
+      git push origin main
+      echo "✅ Changes pushed successfully"
+    else
+      echo "⏭️ No changes to commit"
+    fi
