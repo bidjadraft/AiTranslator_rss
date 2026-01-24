@@ -17,10 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
+    - name: Checkout repository with full history
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # Get all history for proper git diff
     
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -31,32 +31,80 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install feedparser==6.0.10 requests==2.31.0
     
     - name: Verify config.ini exists
       run: |
         echo "Checking for config.ini..."
         if [ -f "config.ini" ]; then
           echo "✅ config.ini found"
-          echo "Contents of config.ini (masked):"
-          sed 's/gemini_api_key = .*/gemini_api_key = ********/' config.ini
+          echo "Config contents (API key masked):"
+          sed -E 's/(gemini_api_key\s*=\s*).*/\1********/' config.ini
         else
           echo "❌ config.ini not found!"
           echo "Please create config.ini in the repository root."
           exit 1
         fi
     
+    - name: Pull latest changes
+      run: |
+        echo "Pulling latest changes from repository..."
+        git pull origin main || git pull origin master
+        echo "✅ Repository updated"
+    
     - name: Run RSS translator
       run: |
+        echo "=== Starting RSS Translator ==="
         echo "Start time: $(date)"
         echo "Current directory: $(pwd)"
-        echo "Files in directory:"
+        echo ""
+        echo "Files before execution:"
         ls -la
         
-        # Run the translator
-        python main.py
+        # Run the translator with error handling
+        if python main.py; then
+          echo "✅ RSS translator completed successfully"
+        else
+          echo "❌ RSS translator failed with error code: $?"
+          echo "Check rss_translator.log for details"
+        fi
         
+        echo ""
         echo "End time: $(date)"
+    
+    - name: Check and create feed.xml if missing
+      run: |
+        echo "=== Checking output files ==="
+        
+        # Create empty feed.xml if it doesn't exist
+        if [ ! -f "feed.xml" ]; then
+          echo "⚠️ feed.xml not found, creating empty file..."
+          echo '<?xml version="1.0" encoding="utf-8"?>' > feed.xml
+          echo '<rss version="2.0"><channel>' >> feed.xml
+          echo '<title>RSS Translations</title>' >> feed.xml
+          echo '<description>Translated RSS feeds</description>' >> feed.xml
+          echo '<link>https://github.com/${{ github.repository }}</link>' >> feed.xml
+          echo '</channel></rss>' >> feed.xml
+          echo "✅ Created empty feed.xml"
+        fi
+        
+        # Create last_post_id.txt if it doesn't exist
+        if [ ! -f "last_post_id.txt" ]; then
+          echo "⚠️ last_post_id.txt not found, creating empty file..."
+          echo "" > last_post_id.txt
+          echo "✅ Created empty last_post_id.txt"
+        fi
+        
+        # Create rss_translator.log if it doesn't exist
+        if [ ! -f "rss_translator.log" ]; then
+          echo "⚠️ rss_translator.log not found, creating empty file..."
+          echo "Log created at $(date)" > rss_translator.log
+          echo "✅ Created empty rss_translator.log"
+        fi
+        
+        echo ""
+        echo "Files after execution:"
+        ls -la feed.xml last_post_id.txt rss_translator.log
     
     - name: Check results
       run: |
@@ -64,50 +112,79 @@ jobs:
         
         if [ -f "feed.xml" ]; then
           echo "✅ feed.xml exists"
-          echo "Size: $(stat -c%s feed.xml) bytes"
+          echo "Size: $(wc -c < feed.xml) bytes"
+          echo "Lines: $(wc -l < feed.xml)"
           
-          # Try to count items
+          # Try to count items if file is valid XML
           if command -v xmllint &> /dev/null; then
-            item_count=$(xmllint --xpath "count(//item)" feed.xml 2>/dev/null || echo "N/A")
-            echo "Items in feed: $item_count"
+            if xmllint --noout feed.xml 2>/dev/null; then
+              item_count=$(xmllint --xpath "count(//item)" feed.xml 2>/dev/null || echo "0")
+              echo "Items in feed: $item_count"
+            else
+              echo "⚠️ feed.xml is not valid XML"
+            fi
           fi
-        else
-          echo "❌ feed.xml not created"
         fi
         
         if [ -f "last_post_id.txt" ]; then
           echo "✅ last_post_id.txt exists"
-          echo "Last processed ID: $(cat last_post_id.txt)"
+          content=$(cat last_post_id.txt)
+          if [ -z "$content" ]; then
+            echo "Last processed ID: (empty)"
+          else
+            echo "Last processed ID: $content"
+          fi
         fi
         
         if [ -f "rss_translator.log" ]; then
           echo "✅ rss_translator.log exists"
-          echo "Last 5 lines of log:"
-          tail -5 rss_translator.log || echo "Cannot read log"
+          echo "Size: $(wc -c < rss_translator.log) bytes"
+          echo "Last 10 lines:"
+          tail -10 rss_translator.log || echo "Cannot read log"
         fi
     
-    - name: Commit changes
+    - name: Configure git and push changes
       run: |
-        # Configure git
+        echo "=== Configuring git ==="
+        
+        # Configure git user
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
-        # Check for changes in output files
-        changed_files=$(git status --porcelain | grep -E "feed\.xml|last_post_id\.txt|rss_translator\.log" || true)
+        echo "Current git status:"
+        git status --porcelain
         
-        if [ -n "$changed_files" ]; then
-          echo "Changes detected in:"
-          echo "$changed_files"
+        # Check if there are any changes
+        if git status --porcelain | grep -qE "feed\.xml|last_post_id\.txt|rss_translator\.log"; then
+          echo "✅ Changes detected in output files"
           
-          # Add only the output files
-          git add feed.xml last_post_id.txt rss_translator.log
+          # Stage only the output files
+          git add feed.xml last_post_id.txt rss_translator.log 2>/dev/null || true
           
-          # Commit with timestamp
-          git commit -m "🤖 Auto-update: RSS translation $(date '+%Y-%m-%d %H:%M:%S')"
+          # Check what files are staged
+          echo "Staged files:"
+          git diff --cached --name-only
           
-          # Push changes
-          git push
-          echo "✅ Changes pushed to repository"
+          # Commit changes
+          commit_message="🤖 Auto-update: RSS translation $(date '+%Y-%m-%d %H:%M:%S %Z')"
+          echo "Commit message: $commit_message"
+          
+          if git commit -m "$commit_message"; then
+            echo "✅ Changes committed"
+            
+            # Try to push changes
+            if git push; then
+              echo "✅ Changes pushed to repository"
+            else
+              echo "⚠️ Failed to push changes"
+              echo "Trying with force pull first..."
+              git pull --rebase origin main || git pull --rebase origin master
+              git push
+              echo "✅ Changes pushed after pull"
+            fi
+          else
+            echo "⚠️ Nothing to commit"
+          fi
         else
           echo "⏭️ No changes to commit"
         fi
@@ -116,9 +193,9 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: rss-translator-artifacts
+        name: rss-translator-output
         path: |
           feed.xml
           last_post_id.txt
           rss_translator.log
-        retention-days: 30
+        retention-days: 7
