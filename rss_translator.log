@@ -121,3 +121,23 @@
 
 2026-01-24 00:15:18,305 - INFO - 💾 Saved feed.xml with 1 items
 2026-01-24 00:15:18,305 - INFO - 🎉 Run completed successfully.
+2026-01-24 00:25:12,969 - INFO - === RSS Translator Started ===
+2026-01-24 00:25:12,969 - INFO - Python version: 3.10.19 (main, Oct 10 2025, 01:01:37) [GCC 13.3.0]
+2026-01-24 00:25:12,969 - INFO - Working directory: /home/runner/work/AiTranslator_rss/AiTranslator_rss
+2026-01-24 00:25:12,969 - INFO - Config file: /home/runner/work/AiTranslator_rss/AiTranslator_rss/config.ini (exists: True)
+2026-01-24 00:25:12,969 - INFO - GEMINI_API_KEY: your****************here
+2026-01-24 00:25:12,969 - INFO - Number of RSS feeds: 2
+2026-01-24 00:25:12,969 - INFO - RSS feeds: ['https://feed.alternativeto.net/news/all', 'https://www.elbilad.net/rss']
+2026-01-24 00:25:12,969 - INFO - 🚀 Starting RSS Translator
+2026-01-24 00:25:12,969 - INFO - ✅ Config verified successfully.
+2026-01-24 00:25:12,970 - ERROR - Failed to parse existing feed.xml: no element found: line 1, column 0
+2026-01-24 00:25:12,970 - INFO - Creating new feed.xml file...
+2026-01-24 00:25:12,970 - INFO - ✅ Created new feed.xml structure
+2026-01-24 00:25:12,970 - INFO - 📥 Fetching RSS feed: https://feed.alternativeto.net/news/all
+2026-01-24 00:25:13,222 - INFO -   Found 15 entries
+2026-01-24 00:25:13,222 - INFO - 📥 Fetching RSS feed: https://www.elbilad.net/rss
+2026-01-24 00:25:13,886 - WARNING -   No entries found
+2026-01-24 00:25:13,886 - INFO - 📊 Total entries from all feeds: 15
+2026-01-24 00:25:13,886 - INFO - 📖 Last processed ID: 'https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/'
+2026-01-24 00:25:13,887 - INFO - No new posts found since last processed post.
+2026-01-24 00:25:13,887 - INFO - ✅ RSS Translator finished!
