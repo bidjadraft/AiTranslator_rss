@@ -1,0 +1,124 @@
+name: RSS Translator
+
+on:
+  schedule:
+    # Runs every hour at minute 0
+    - cron: '0 * * * *'
+  # Manual trigger from GitHub Actions UI
+  workflow_dispatch:
+    inputs:
+      manual_run:
+        description: 'Manual run of RSS translator'
+        required: false
+        default: 'yes'
+
+jobs:
+  translate-rss:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Verify config.ini exists
+      run: |
+        echo "Checking for config.ini..."
+        if [ -f "config.ini" ]; then
+          echo "✅ config.ini found"
+          echo "Contents of config.ini (masked):"
+          sed 's/gemini_api_key = .*/gemini_api_key = ********/' config.ini
+        else
+          echo "❌ config.ini not found!"
+          echo "Please create config.ini in the repository root."
+          exit 1
+        fi
+    
+    - name: Run RSS translator
+      run: |
+        echo "Start time: $(date)"
+        echo "Current directory: $(pwd)"
+        echo "Files in directory:"
+        ls -la
+        
+        # Run the translator
+        python main.py
+        
+        echo "End time: $(date)"
+    
+    - name: Check results
+      run: |
+        echo "=== Execution Results ==="
+        
+        if [ -f "feed.xml" ]; then
+          echo "✅ feed.xml exists"
+          echo "Size: $(stat -c%s feed.xml) bytes"
+          
+          # Try to count items
+          if command -v xmllint &> /dev/null; then
+            item_count=$(xmllint --xpath "count(//item)" feed.xml 2>/dev/null || echo "N/A")
+            echo "Items in feed: $item_count"
+          fi
+        else
+          echo "❌ feed.xml not created"
+        fi
+        
+        if [ -f "last_post_id.txt" ]; then
+          echo "✅ last_post_id.txt exists"
+          echo "Last processed ID: $(cat last_post_id.txt)"
+        fi
+        
+        if [ -f "rss_translator.log" ]; then
+          echo "✅ rss_translator.log exists"
+          echo "Last 5 lines of log:"
+          tail -5 rss_translator.log || echo "Cannot read log"
+        fi
+    
+    - name: Commit changes
+      run: |
+        # Configure git
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        # Check for changes in output files
+        changed_files=$(git status --porcelain | grep -E "feed\.xml|last_post_id\.txt|rss_translator\.log" || true)
+        
+        if [ -n "$changed_files" ]; then
+          echo "Changes detected in:"
+          echo "$changed_files"
+          
+          # Add only the output files
+          git add feed.xml last_post_id.txt rss_translator.log
+          
+          # Commit with timestamp
+          git commit -m "🤖 Auto-update: RSS translation $(date '+%Y-%m-%d %H:%M:%S')"
+          
+          # Push changes
+          git push
+          echo "✅ Changes pushed to repository"
+        else
+          echo "⏭️ No changes to commit"
+        fi
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: rss-translator-artifacts
+        path: |
+          feed.xml
+          last_post_id.txt
+          rss_translator.log
+        retention-days: 30
