@@ -53,3 +53,71 @@
 2026-01-24 00:12:47,522 - ERROR - 🚨 Failed to translate with all available Gemini models
 2026-01-24 00:12:47,522 - ERROR - ❌ Failed to translate title for post https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/
 2026-01-24 00:12:47,522 - ERROR - ❌ CRITICAL: Failed to process post. Stopping.
+2026-01-24 00:15:04,070 - INFO - === RSS Translator Started ===
+2026-01-24 00:15:04,070 - INFO - Working directory (BASE_DIR): /home/runner/work/AiTranslator_rss/AiTranslator_rss
+2026-01-24 00:15:04,070 - INFO - Config file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/config.ini
+2026-01-24 00:15:04,070 - INFO - Tracker file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/last_post_id.txt
+2026-01-24 00:15:04,070 - INFO - Feed file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/feed.xml
+2026-01-24 00:15:04,070 - INFO - Log file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/rss_translator.log
+2026-01-24 00:15:04,070 - INFO - Config file exists: True
+2026-01-24 00:15:04,070 - INFO - GEMINI_API_KEY: AIza*******************************ewhQ
+2026-01-24 00:15:04,071 - INFO - RSS_URLS from config: ['https://feed.alternativeto.net/news/all', 'https://www.elbilad.net/rss']
+2026-01-24 00:15:04,071 - INFO - Number of RSS feeds: 2
+2026-01-24 00:15:04,071 - INFO - GEMINI_MODELS from config: ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3-flash', 'gemini-robotics-er-1.5-preview']
+2026-01-24 00:15:04,071 - INFO - TRANSLATION_PROMPT: ترجم النص التالي إلى العربية بدقة وأمانة مع الحفاظ...
+2026-01-24 00:15:04,071 - INFO - Translation config: temperature=0.2, top_p=0.8
+2026-01-24 00:15:04,071 - INFO - 🚀 Starting RSS Translator
+2026-01-24 00:15:04,071 - INFO - 📁 Working directory: /home/runner/work/AiTranslator_rss/AiTranslator_rss
+2026-01-24 00:15:04,071 - INFO - 🔍 Checking files in root directory:
+2026-01-24 00:15:04,071 - INFO -   config.ini: ✅ Found
+2026-01-24 00:15:04,071 - INFO -   last_post_id.txt: ✅ Exists
+2026-01-24 00:15:04,071 - INFO -   feed.xml: ✅ Exists
+2026-01-24 00:15:04,071 - INFO - ✅ Config verified successfully.
+2026-01-24 00:15:04,071 - INFO - 🔍 Loading/Creating feed.xml...
+2026-01-24 00:15:04,071 - ERROR - Failed to parse existing feed.xml: no element found: line 1, column 0
+2026-01-24 00:15:04,072 - INFO - Creating new feed.xml file...
+2026-01-24 00:15:04,072 - INFO - ✅ Created new feed.xml structure
+2026-01-24 00:15:04,072 - INFO - 🔍 Starting with Gemini model: gemini-2.5-flash
+2026-01-24 00:15:04,072 - INFO - 🔍 === CHECKING TRACKER FILE BEFORE START ===
+2026-01-24 00:15:04,072 - INFO - 📖 Read from tracker file: '' -> normalized: ''
+2026-01-24 00:15:04,072 - INFO - Last processed post ID from tracker: ''
+2026-01-24 00:15:04,072 - INFO - ============================================
+2026-01-24 00:15:04,072 - INFO - 📥 Fetching RSS feed: https://feed.alternativeto.net/news/all
+2026-01-24 00:15:04,171 - INFO -   Found 15 entries from https://feed.alternativeto.net/news/all
+2026-01-24 00:15:04,171 - INFO - 📥 Fetching RSS feed: https://www.elbilad.net/rss
+2026-01-24 00:15:04,847 - WARNING -   No entries found in https://www.elbilad.net/rss
+2026-01-24 00:15:04,847 - INFO - 📊 Total entries from all feeds: 15
+2026-01-24 00:15:04,847 - INFO - No last post ID found. Processing the latest post only.
+2026-01-24 00:15:04,847 - INFO - 
+🎯 START Processing post from https://feed.alternativeto.net/news/all
+2026-01-24 00:15:04,847 - INFO - 📄 Post ID: https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/
+2026-01-24 00:15:04,847 - INFO - 📝 Original title: Microsoft has made the Xbox app compatible with ARM-based Windows 11 PCs...
+2026-01-24 00:15:04,847 - INFO - 📄 Original content length: 1311 characters
+2026-01-24 00:15:04,847 - INFO - 🔧 Attempt 1/4: Using Gemini model: gemini-2.5-flash
+2026-01-24 00:15:11,792 - INFO - ✅ Translation successful with model: gemini-2.5-flash
+2026-01-24 00:15:11,793 - INFO - 🔧 Attempt 1/4: Using Gemini model: gemini-2.5-flash
+2026-01-24 00:15:11,908 - ERROR - ❌ Gemini HTTP error None with model gemini-2.5-flash: 403 Client Error: Forbidden for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=AIzaSyDpI-JefBSzot1MA7I7p6UDajXkkfCewhQ
+2026-01-24 00:15:11,908 - INFO - 🔄 Switching to next model: gemini-2.5-flash-lite
+2026-01-24 00:15:13,910 - INFO - 🔧 Attempt 2/4: Using Gemini model: gemini-2.5-flash-lite
+2026-01-24 00:15:14,018 - ERROR - ❌ Gemini HTTP error None with model gemini-2.5-flash-lite: 403 Client Error: Forbidden for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=AIzaSyDpI-JefBSzot1MA7I7p6UDajXkkfCewhQ
+2026-01-24 00:15:14,019 - INFO - 🔄 Switching to next model: gemini-3-flash
+2026-01-24 00:15:16,021 - INFO - 🔧 Attempt 3/4: Using Gemini model: gemini-3-flash
+2026-01-24 00:15:16,158 - ERROR - ❌ Gemini HTTP error None with model gemini-3-flash: 404 Client Error: Not Found for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=AIzaSyDpI-JefBSzot1MA7I7p6UDajXkkfCewhQ
+2026-01-24 00:15:16,158 - INFO - 🔄 Switching to next model: gemini-robotics-er-1.5-preview
+2026-01-24 00:15:18,161 - INFO - 🔧 Attempt 4/4: Using Gemini model: gemini-robotics-er-1.5-preview
+2026-01-24 00:15:18,278 - ERROR - ❌ Gemini HTTP error None with model gemini-robotics-er-1.5-preview: 403 Client Error: Forbidden for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-robotics-er-1.5-preview:generateContent?key=AIzaSyDpI-JefBSzot1MA7I7p6UDajXkkfCewhQ
+2026-01-24 00:15:18,278 - ERROR - 🚨 All 4 models exhausted
+2026-01-24 00:15:18,278 - ERROR - 🚨 Failed to translate with all available Gemini models
+2026-01-24 00:15:18,279 - INFO - 📝 Translated title: إليك الترجمة الدقيقة والأمينة:
+
+**جعلت مايكروسوفت تطبيق إكس بوكس متوافقًا مع أجهزة كمبيوتر ويندوز 11...
+2026-01-24 00:15:18,279 - INFO - 📄 Translated content length: 1311 characters
+2026-01-24 00:15:18,279 - INFO - ➕ Added new item to feed.xml: إليك الترجمة الدقيقة والأمينة:
+
+**جعلت مايكروسوفت ...
+2026-01-24 00:15:18,279 - INFO - 💾 SAVING ID to tracker: https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/
+2026-01-24 00:15:18,280 - INFO - 💾 SUCCESS: Saved to tracker: 'https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/'
+2026-01-24 00:15:18,280 - INFO - ----------------
+
+2026-01-24 00:15:18,305 - INFO - 💾 Saved feed.xml with 1 items
+2026-01-24 00:15:18,305 - INFO - 🎉 Run completed successfully.
