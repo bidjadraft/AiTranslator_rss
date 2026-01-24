@@ -1,0 +1,55 @@
+2026-01-24 00:12:40,229 - INFO - === RSS Translator Started ===
+2026-01-24 00:12:40,229 - INFO - Working directory (BASE_DIR): /home/runner/work/AiTranslator_rss/AiTranslator_rss
+2026-01-24 00:12:40,229 - INFO - Config file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/config.ini
+2026-01-24 00:12:40,229 - INFO - Tracker file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/last_post_id.txt
+2026-01-24 00:12:40,229 - INFO - Feed file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/feed.xml
+2026-01-24 00:12:40,229 - INFO - Log file path: /home/runner/work/AiTranslator_rss/AiTranslator_rss/rss_translator.log
+2026-01-24 00:12:40,229 - INFO - Config file exists: True
+2026-01-24 00:12:40,229 - INFO - GEMINI_API_KEY: your****************here
+2026-01-24 00:12:40,230 - INFO - RSS_URLS from config: ['https://feed.alternativeto.net/news/all', 'https://www.elbilad.net/rss']
+2026-01-24 00:12:40,230 - INFO - Number of RSS feeds: 2
+2026-01-24 00:12:40,230 - INFO - GEMINI_MODELS from config: ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-3-flash', 'gemini-robotics-er-1.5-preview']
+2026-01-24 00:12:40,230 - INFO - TRANSLATION_PROMPT: ترجم النص التالي إلى العربية بدقة وأمانة مع الحفاظ...
+2026-01-24 00:12:40,230 - INFO - Translation config: temperature=0.2, top_p=0.8
+2026-01-24 00:12:40,230 - INFO - 🚀 Starting RSS Translator
+2026-01-24 00:12:40,230 - INFO - 📁 Working directory: /home/runner/work/AiTranslator_rss/AiTranslator_rss
+2026-01-24 00:12:40,230 - INFO - 🔍 Checking files in root directory:
+2026-01-24 00:12:40,230 - INFO -   config.ini: ✅ Found
+2026-01-24 00:12:40,230 - INFO -   last_post_id.txt: ⚠️ Will be created
+2026-01-24 00:12:40,230 - INFO -   feed.xml: ✅ Exists
+2026-01-24 00:12:40,230 - INFO - ✅ Config verified successfully.
+2026-01-24 00:12:40,230 - INFO - 🔍 Loading/Creating feed.xml...
+2026-01-24 00:12:40,230 - ERROR - Failed to parse existing feed.xml: no element found: line 1, column 0
+2026-01-24 00:12:40,230 - INFO - Creating new feed.xml file...
+2026-01-24 00:12:40,231 - INFO - ✅ Created new feed.xml structure
+2026-01-24 00:12:40,231 - INFO - 🔍 Starting with Gemini model: gemini-2.5-flash
+2026-01-24 00:12:40,231 - INFO - 🔍 === CHECKING TRACKER FILE BEFORE START ===
+2026-01-24 00:12:40,231 - INFO - 📂 Tracker file not found. Starting fresh.
+2026-01-24 00:12:40,231 - INFO - Last processed post ID from tracker: ''
+2026-01-24 00:12:40,231 - INFO - ============================================
+2026-01-24 00:12:40,231 - INFO - 📥 Fetching RSS feed: https://feed.alternativeto.net/news/all
+2026-01-24 00:12:40,421 - INFO -   Found 15 entries from https://feed.alternativeto.net/news/all
+2026-01-24 00:12:40,421 - INFO - 📥 Fetching RSS feed: https://www.elbilad.net/rss
+2026-01-24 00:12:41,257 - WARNING -   No entries found in https://www.elbilad.net/rss
+2026-01-24 00:12:41,257 - INFO - 📊 Total entries from all feeds: 15
+2026-01-24 00:12:41,257 - INFO - No last post ID found. Processing the latest post only.
+2026-01-24 00:12:41,257 - INFO - 
+🎯 START Processing post from https://feed.alternativeto.net/news/all
+2026-01-24 00:12:41,257 - INFO - 📄 Post ID: https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/
+2026-01-24 00:12:41,257 - INFO - 📝 Original title: Microsoft has made the Xbox app compatible with ARM-based Windows 11 PCs...
+2026-01-24 00:12:41,257 - INFO - 📄 Original content length: 1311 characters
+2026-01-24 00:12:41,257 - INFO - 🔧 Attempt 1/4: Using Gemini model: gemini-2.5-flash
+2026-01-24 00:12:41,336 - ERROR - ❌ Gemini HTTP error None with model gemini-2.5-flash: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=your_gemini_api_key_here
+2026-01-24 00:12:41,336 - INFO - 🔄 Switching to next model: gemini-2.5-flash-lite
+2026-01-24 00:12:43,339 - INFO - 🔧 Attempt 2/4: Using Gemini model: gemini-2.5-flash-lite
+2026-01-24 00:12:43,399 - ERROR - ❌ Gemini HTTP error None with model gemini-2.5-flash-lite: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=your_gemini_api_key_here
+2026-01-24 00:12:43,400 - INFO - 🔄 Switching to next model: gemini-3-flash
+2026-01-24 00:12:45,402 - INFO - 🔧 Attempt 3/4: Using Gemini model: gemini-3-flash
+2026-01-24 00:12:45,459 - ERROR - ❌ Gemini HTTP error None with model gemini-3-flash: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash:generateContent?key=your_gemini_api_key_here
+2026-01-24 00:12:45,460 - INFO - 🔄 Switching to next model: gemini-robotics-er-1.5-preview
+2026-01-24 00:12:47,462 - INFO - 🔧 Attempt 4/4: Using Gemini model: gemini-robotics-er-1.5-preview
+2026-01-24 00:12:47,521 - ERROR - ❌ Gemini HTTP error None with model gemini-robotics-er-1.5-preview: 400 Client Error: Bad Request for url: https://generativelanguage.googleapis.com/v1beta/models/gemini-robotics-er-1.5-preview:generateContent?key=your_gemini_api_key_here
+2026-01-24 00:12:47,522 - ERROR - 🚨 All 4 models exhausted
+2026-01-24 00:12:47,522 - ERROR - 🚨 Failed to translate with all available Gemini models
+2026-01-24 00:12:47,522 - ERROR - ❌ Failed to translate title for post https://alternativeto.net/news/2026/1/microsoft-has-made-the-xbox-app-compatible-with-arm-based-windows-11-pcs/
+2026-01-24 00:12:47,522 - ERROR - ❌ CRITICAL: Failed to process post. Stopping.
