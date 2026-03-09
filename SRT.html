@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مصحح توقيت ملفات SRT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;400;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .drop-zone { border: 2px dashed #cbd5e1; transition: all 0.3s ease; }
+        .drop-zone.active { border-color: #3b82f6; background: #eff6ff; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-2xl w-full glass p-8 rounded-3xl shadow-2xl border border-slate-200">
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 text-white shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-800">مصحح توقيت SRT</h1>
+            <p class="text-slate-500 mt-2">اجعل توقيتات الترجمة متصلة بلمسة واحدة</p>
+        </header>
+
+        <main>
+            <div id="dropZone" class="drop-zone rounded-2xl p-10 text-center cursor-pointer mb-6">
+                <input type="file" id="fileInput" accept=".srt" class="hidden">
+                <div id="fileInfo" class="space-y-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-lg text-slate-600">اسحب ملف SRT هنا أو انقر للاختيار</p>
+                    <p class="text-sm text-slate-400">سيتم إصلاح الفجوات الزمنية بين الجمل</p>
+                </div>
+            </div>
+
+            <button id="processBtn" disabled class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 text-white font-bold py-4 rounded-xl transition-all shadow-lg flex items-center justify-center gap-2">
+                <span>بدء الإصلاح</span>
+            </button>
+
+            <div id="successArea" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <div class="flex items-center gap-3 text-green-700 mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span class="font-bold">تمت المعالجة بنجاح!</span>
+                </div>
+                <button id="downloadBtn" class="w-full bg-slate-800 hover:bg-black text-white py-3 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    تحميل الملف المعدل
+                </button>
+            </div>
+        </main>
+
+        <footer class="mt-8 text-center text-slate-400 text-sm">
+            نهاية كل ترجمة تصبح هي بداية الترجمة التي تليها مباشرة
+        </footer>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const successArea = document.getElementById('successArea');
+        const fileInfo = document.getElementById('fileInfo');
+
+        let originalContent = '';
+        let originalFileName = '';
+        let processedContent = '';
+
+        dropZone.onclick = () => fileInput.click();
+
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('active'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('active');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        function handleFile(file) {
+            if (file && file.name.endsWith('.srt')) {
+                originalFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    originalContent = e.target.result;
+                    fileInfo.innerHTML = `
+                        <p class="text-blue-600 font-bold">${file.name}</p>
+                        <p class="text-xs text-slate-400">حجم الملف: ${(file.size / 1024).toFixed(2)} كيلوبايت</p>
+                    `;
+                    processBtn.disabled = false;
+                    successArea.classList.add('hidden');
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function timeToSeconds(t) {
+            const parts = t.split(/[:,]/);
+            return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]) + parseInt(parts[3]) / 1000;
+        }
+
+        function secondsToTime(s) {
+            const hrs = Math.floor(s / 3600);
+            const mins = Math.floor((s % 3600) / 60);
+            const secs = Math.floor(s % 60);
+            const ms = Math.floor((s - Math.floor(s)) * 1000);
+            return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')},${String(ms).padStart(3, '0')}`;
+        }
+
+        processBtn.onclick = () => {
+            const blocks = originalContent.trim().split(/\n\s*\n/);
+            const subtitles = [];
+
+            blocks.forEach(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length >= 3) {
+                    const timeMatch = lines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
+                    if (timeMatch) {
+                        subtitles.push({
+                            index: lines[0],
+                            start: timeMatch[1],
+                            end: timeMatch[2],
+                            startSec: timeToSeconds(timeMatch[1]),
+                            endSec: timeToSeconds(timeMatch[2]),
+                            text: lines.slice(2).join('\n')
+                        });
+                    }
+                }
+            });
+
+            for (let i = 0; i < subtitles.length - 1; i++) {
+                subtitles[i].end = subtitles[i+1].start;
+            }
+
+            processedContent = subtitles.map(s => `${s.index}\n${s.start} --> ${s.end}\n${s.text}`).join('\n\n');
+            successArea.classList.remove('hidden');
+            processBtn.disabled = true;
+        };
+
+        downloadBtn.onclick = () => {
+            const blob = new Blob([processedContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = originalFileName.replace('.srt', '_fixed.srt');
+            a.click();
+            window.URL.revokeObjectURL(url);
+        };
+    </script>
+</body>
+</html>
+
