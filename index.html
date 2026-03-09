@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube SRT Fixer - Smart Language</title>
+    <title>YouTube SRT Fixer - Pro Effects</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;700&family=Inter:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
@@ -37,47 +37,37 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .neon-border {
             border: 2px dashed var(--text-sub);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .neon-border.active {
-            border-color: #ff0000;
-            background: rgba(255, 0, 0, 0.05);
+            transition: all 0.3s ease;
         }
 
         .btn-youtube {
             background: #ff0000;
             color: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .btn-youtube:hover:not(:disabled) {
-            background: #cc0000;
+        .btn-youtube:active {
+            transform: scale(0.96);
+            filter: brightness(0.8);
         }
 
-        .btn-secondary {
-            background: var(--border-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
+        .btn-success {
+            background: #22c55e;
+            color: white;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-success:active {
+            transform: scale(0.96);
+            filter: brightness(0.8);
         }
 
         .yt-icon {
             color: #ff0000;
-        }
-
-        .social-link {
-            transition: all 0.3s ease;
-            opacity: 0.6;
-            color: var(--text-main);
-        }
-
-        .social-link:hover {
-            opacity: 1;
-            transform: translateY(-3px);
         }
 
         .fixed-header {
@@ -89,7 +79,6 @@
             backdrop-filter: blur(10px);
             z-index: 1000;
             border-bottom: 1px solid var(--border-color);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
 
         .nav-btn {
@@ -98,21 +87,34 @@
             padding: 8px 12px;
             border-radius: 8px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-size: 12px;
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 6px;
         }
-        
-        .nav-btn.circle {
-            border-radius: 50%;
-            padding: 8px;
+
+        .nav-btn:active {
+            transform: scale(0.9);
         }
 
         .content-rtl {
             direction: rtl;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .loading-bar {
+            height: 3px;
+            background: currentColor;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            animation: progress 1s linear forwards;
         }
     </style>
 </head>
@@ -128,19 +130,12 @@
             
             <div class="flex items-center gap-2">
                 <button id="langToggle" class="nav-btn" title="Change Language">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                    </svg>
                     <span id="langText">العربية</span>
                 </button>
 
-                <button id="themeToggle" class="nav-btn circle" title="Toggle Theme">
-                    <svg id="sunIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                    </svg>
-                    <svg id="moonIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-                    </svg>
+                <button id="themeToggle" class="nav-btn px-3" title="Toggle Theme">
+                    <svg id="sunIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 9H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" /></svg>
+                    <svg id="moonIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" /></svg>
                 </button>
             </div>
         </div>
@@ -153,14 +148,12 @@
         </div>
 
         <div class="youtube-card rounded-2xl p-6 md:p-10">
-            <div id="dropZone" class="neon-border rounded-xl py-12 px-6 text-center cursor-pointer group">
+            <div id="dropZone" class="neon-border rounded-xl py-12 px-6 text-center cursor-pointer group hover:bg-zinc-500/5">
                 <input type="file" id="fileInput" accept=".srt" class="hidden">
                 
                 <div id="defaultView">
                     <div class="mb-5 inline-flex p-4 bg-zinc-500/10 rounded-full text-zinc-500 group-hover:text-red-600 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
-                        </svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" /></svg>
                     </div>
                     <h2 id="dropTitle" class="text-lg font-bold mb-1">Choose SRT File</h2>
                     <p id="dropDesc" class="text-sm opacity-60">Drag and drop your file here to start</p>
@@ -170,35 +163,31 @@
                     <div class="flex items-center justify-between bg-zinc-500/5 p-4 rounded-xl border border-zinc-500/20">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 flex items-center justify-center bg-red-600/10 text-red-600 rounded-lg">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
                             </div>
                             <div class="text-start">
                                 <h3 id="fileName" class="text-sm font-bold truncate max-w-[180px]">subtitle.srt</h3>
                                 <p id="fileSize" class="text-[10px] uppercase opacity-50">0.00 KB</p>
                             </div>
                         </div>
-                        <button onclick="clearFile(event)" class="opacity-50 hover:opacity-100 transition-opacity">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                        <button onclick="clearFile(event)" class="opacity-50 hover:opacity-100 p-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-6 space-y-3">
-                <button id="processBtn" disabled class="btn-youtube w-full py-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-20 disabled:cursor-not-allowed shadow-lg transition-all">
+            <div class="mt-6 space-y-4">
+                <button id="processBtn" disabled class="btn-youtube relative overflow-hidden w-full py-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-20 disabled:cursor-not-allowed shadow-lg">
                     <span id="btnText">Optimize & Bridge Sync</span>
+                    <div id="processBar" class="hidden loading-bar"></div>
                 </button>
 
-                <div id="downloadContainer" class="hidden text-center">
-                    <button id="downloadBtn" class="btn-secondary w-full py-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
+                <div id="downloadContainer" class="hidden text-center scale-95 opacity-0 transition-all duration-300">
+                    <button id="downloadBtn" class="btn-success relative overflow-hidden w-full py-4 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         <span id="downloadText">Download Optimized File</span>
+                        <div id="downloadBar" class="hidden loading-bar"></div>
                     </button>
                     <p id="readyStatus" class="text-[10px] text-green-500 mt-2 font-bold uppercase tracking-tighter">Ready for YouTube upload</p>
                 </div>
@@ -206,20 +195,12 @@
         </div>
     </div>
 
-    <footer class="mt-8 py-8 w-full flex flex-col items-center gap-4">
+    <footer class="mt-8 py-8 w-full flex flex-col items-center gap-4 opacity-50">
         <div class="flex items-center gap-6">
-            <a href="https://youtube.com/@bidjadraft" target="_blank" class="social-link">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.377.505 9.377.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                </svg>
-            </a>
-            <a href="https://t.me/bidjadraft" target="_blank" class="social-link">
-                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.303.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-                </svg>
-            </a>
+            <a href="https://youtube.com/@bidjadraft" target="_blank" class="hover:text-red-600 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.377.505 9.377.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+            <a href="https://t.me/bidjadraft" target="_blank" class="hover:text-blue-500 transition-colors"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.303.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg></a>
         </div>
-        <p class="text-[10px] uppercase tracking-widest font-bold opacity-30">Subtitle Optimization Tool</p>
+        <p class="text-[10px] uppercase tracking-widest font-bold">Subtitle Optimization Tool</p>
     </footer>
 
     <script>
@@ -233,7 +214,9 @@
                 btnText: 'Optimize & Bridge Sync',
                 downloadText: 'Download Optimized File',
                 readyStatus: 'Ready for YouTube upload',
-                successText: '✓ Process Complete'
+                successText: '✓ Process Complete',
+                processingText: 'Processing File...',
+                downloadingText: 'Preparing Download...'
             },
             ar: {
                 langText: 'English',
@@ -244,11 +227,16 @@
                 btnText: 'تحسين المزامنة والربط',
                 downloadText: 'تحميل الملف المعدل',
                 readyStatus: 'جاهز للاستخدام على يوتيوب',
-                successText: '✓ تمت العملية بنجاح'
+                successText: '✓ تمت العملية بنجاح',
+                processingText: 'جاري المعالجة...',
+                downloadingText: 'جاري التحضير...'
             }
         };
 
         let currentLang = 'en';
+        let rawText = '';
+        let fileName = '';
+        let processedText = '';
 
         const langToggle = document.getElementById('langToggle');
         const themeToggle = document.getElementById('themeToggle');
@@ -257,13 +245,21 @@
         const body = document.body;
         const contentArea = document.getElementById('contentArea');
 
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const defaultView = document.getElementById('defaultView');
+        const fileView = document.getElementById('fileView');
+        const fileNameLabel = document.getElementById('fileName');
+        const fileSizeLabel = document.getElementById('fileSize');
+        const processBtn = document.getElementById('processBtn');
+        const processBar = document.getElementById('processBar');
+        const downloadContainer = document.getElementById('downloadContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const downloadBar = document.getElementById('downloadBar');
+
         function updateUI() {
             const data = i18n[currentLang];
-            if (currentLang === 'ar') {
-                contentArea.classList.add('content-rtl');
-            } else {
-                contentArea.classList.remove('content-rtl');
-            }
+            contentArea.classList.toggle('content-rtl', currentLang === 'ar');
             document.getElementById('langText').innerText = data.langText;
             document.getElementById('mainTitle').innerText = data.mainTitle;
             document.getElementById('mainDesc').innerText = data.mainDesc;
@@ -276,11 +272,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             const userLang = navigator.language || navigator.userLanguage;
-            if (userLang.startsWith('ar')) {
-                currentLang = 'ar';
-            } else {
-                currentLang = 'en';
-            }
+            currentLang = userLang.startsWith('ar') ? 'ar' : 'en';
             updateUI();
         });
 
@@ -295,20 +287,6 @@
             sunIcon.classList.toggle('hidden', !isLight);
             moonIcon.classList.toggle('hidden', isLight);
         };
-
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const defaultView = document.getElementById('defaultView');
-        const fileView = document.getElementById('fileView');
-        const fileNameLabel = document.getElementById('fileName');
-        const fileSizeLabel = document.getElementById('fileSize');
-        const processBtn = document.getElementById('processBtn');
-        const downloadContainer = document.getElementById('downloadContainer');
-        const downloadBtn = document.getElementById('downloadBtn');
-
-        let rawText = '';
-        let fileName = '';
-        let processedText = '';
 
         dropZone.onclick = () => fileInput.click();
         fileInput.onchange = (e) => handleFile(e.target.files[0]);
@@ -325,6 +303,7 @@
                     fileView.classList.remove('hidden');
                     processBtn.disabled = false;
                     downloadContainer.classList.add('hidden');
+                    downloadContainer.classList.add('opacity-0', 'scale-95');
                     document.getElementById('btnText').innerText = i18n[currentLang].btnText;
                 };
                 reader.readAsText(file);
@@ -341,38 +320,59 @@
         }
 
         processBtn.onclick = () => {
-            const blocks = rawText.split(/\n\s*\n/).filter(x => x.trim());
-            const parsed = [];
-            blocks.forEach(block => {
-                const subLines = block.trim().split('\n');
-                if (subLines.length >= 2) {
-                    const times = subLines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
-                    if (times) {
-                        parsed.push({
-                            id: subLines[0],
-                            start: times[1],
-                            end: times[2],
-                            content: subLines.slice(2).join('\n')
-                        });
-                    }
-                }
-            });
-            for (let i = 0; i < parsed.length - 1; i++) {
-                parsed[i].end = parsed[i+1].start;
-            }
-            processedText = parsed.map(p => `${p.id}\n${p.start} --> ${p.end}\n${p.content}`).join('\n\n');
-            downloadContainer.classList.remove('hidden');
             processBtn.disabled = true;
-            document.getElementById('btnText').innerText = i18n[currentLang].successText;
+            document.getElementById('btnText').innerText = i18n[currentLang].processingText;
+            processBar.classList.remove('hidden');
+
+            setTimeout(() => {
+                const blocks = rawText.split(/\n\s*\n/).filter(x => x.trim());
+                const parsed = [];
+                blocks.forEach(block => {
+                    const subLines = block.trim().split('\n');
+                    if (subLines.length >= 2) {
+                        const times = subLines[1].match(/(\d{2}:\d{2}:\d{2},\d{3}) --> (\d{2}:\d{2}:\d{2},\d{3})/);
+                        if (times) {
+                            parsed.push({
+                                id: subLines[0],
+                                start: times[1],
+                                end: times[2],
+                                content: subLines.slice(2).join('\n')
+                            });
+                        }
+                    }
+                });
+                for (let i = 0; i < parsed.length - 1; i++) {
+                    parsed[i].end = parsed[i+1].start;
+                }
+                processedText = parsed.map(p => `${p.id}\n${p.start} --> ${p.end}\n${p.content}`).join('\n\n');
+                
+                processBar.classList.add('hidden');
+                document.getElementById('btnText').innerText = i18n[currentLang].successText;
+                
+                downloadContainer.classList.remove('hidden');
+                setTimeout(() => {
+                    downloadContainer.classList.remove('opacity-0', 'scale-95');
+                }, 50);
+            }, 1000);
         };
 
         downloadBtn.onclick = () => {
-            const blob = new Blob([processedText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName.replace('.srt', '_YT_fixed.srt');
-            a.click();
+            downloadBtn.disabled = true;
+            document.getElementById('downloadText').innerText = i18n[currentLang].downloadingText;
+            downloadBar.classList.remove('hidden');
+
+            setTimeout(() => {
+                const blob = new Blob([processedText], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName.replace('.srt', '_optimized.srt');
+                a.click();
+                
+                downloadBar.classList.add('hidden');
+                document.getElementById('downloadText').innerText = i18n[currentLang].downloadText;
+                downloadBtn.disabled = false;
+            }, 1000);
         };
     </script>
 </body>
